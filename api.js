@@ -8,25 +8,30 @@ const EPOCH_FORMAT = '\\d{13}'
 const MILLISECOND = 1000
 
 const showTimestamp = (input) => {
-  const date = dayjs(input)
+  try {
+    const date = dayjs(input)
+    if (!date.isValid()) throw new Error('Invalid Date')
 
-  return {
-    unix: date.unix() * MILLISECOND,
-    utc: date.toLocaleString(),
+    return {
+      unix: date.unix() * MILLISECOND,
+      utc: date.toLocaleString(),
+    }
+  } catch (err) {
+    console.error({ err, input })
+
+    return {
+      error: err.message,
+    }
   }
 }
 
-// route for date format
-router.get(`/:date(${DATE_FORMAT})`, (req, res) => res.send(showTimestamp(req.params.date)))
+// route for empty
+router.get(`/`, (req, res) => res.send(showTimestamp(undefined)))
 
 // route for epoch format 
 router.get(`/:epoch(${EPOCH_FORMAT})`, (req, res) => res.send(showTimestamp(parseInt(req.params.epoch))))
 
-// other failed
-router.get(`/*`, (req, res) => res.status(400).send({
-  error: true,
-  error_message: 'invalid date format (only yyyy-mm-dd or epoch allowed)',
-  params: req.params,
-}))
+// route for other format
+router.get(`/:other`, (req, res) => res.send(showTimestamp(req.params.other || undefined)))
 
 module.exports = router
